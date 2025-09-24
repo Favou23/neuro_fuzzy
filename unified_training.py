@@ -78,13 +78,15 @@ class AnfisWrapper(BaseEstimator, ClassifierMixin):
 
 if __name__ == "__main__":
     methods = {
-        "duval": (os.path.join(BASE_DIR, "duval_data_generator", "datasets", "duval_polygon_dataset.csv"), "FAULT"),
+        "duval": (os.path.join(BASE_DIR, ".......duval_data_generator", "datasets", "duval_polygon_dataset.csv"), "FAULT"),
+        "rogers": (os.path.join(BASE_DIR, "rogers_data_generator", "datasets", "rogers_rule_dataset.csv"), "FAULT"),
+        "drm": (os.path.join(BASE_DIR, "drm_data_generator", "datasets", "drm_rule_dataset.csv"), "FAULT"),
         # fill other dataset paths if you use them
     }
 
     param_grid = {
-        'clf__num_rules': [5],  # reduce search for speed, tune as needed
-        'clf__epochs': [25],
+        'clf__num_rules': [5, 7],  # reduce search for speed, tune as needed
+        'clf__epochs': [25, 50],
         'clf__batch_size': [16, 32],
         'clf__optim': ['Adam']
     }
