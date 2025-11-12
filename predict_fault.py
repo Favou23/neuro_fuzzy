@@ -155,10 +155,10 @@ def predict_dataset(file_path, method="all", output="predicted_results.csv"):
         if m.lower() == 'duval':
             X = prepare_duval_features(df, assume_ppm=True)
         elif m.lower() == 'rogers':
-            from training.data_ingestion import prepare_rogers_features
+            from data_ingestion import prepare_rogers_features
             X = prepare_rogers_features(df)
         elif m.lower() == 'drm':
-            from training.data_ingestion import prepare_drm_features
+            from data_ingestion import prepare_drm_features
             X = prepare_drm_features(df)
         else:
             raise ValueError(f"Unknown method: {m}")
