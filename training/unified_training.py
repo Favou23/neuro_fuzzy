@@ -12,9 +12,10 @@ import seaborn as sns
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 from xanfis import AnfisClassifier
-from data_ingestion import load_and_prepare_data, prepare_duval_features
-# from iec_rule_based import duval_polygons, duval_polygon_classify
+from training.data_ingestion import load_and_prepare_data, prepare_duval_features
+# from training.iec_rule_based import duval_polygons, duval_polygon_classify
 import joblib
+from sklearn.ensemble import RandomForestClassifier
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.join(BASE_DIR, "results")
@@ -77,10 +78,13 @@ class AnfisWrapper(BaseEstimator, ClassifierMixin):
         return self
 
 if __name__ == "__main__":
+    # dataset paths are relative to the fuzzy_logic package root. When running
+    # this script from the `fuzzy_logic` directory (project root), these
+    # relative paths will resolve correctly.
     methods = {
-        "duval": (os.path.join(BASE_DIR, ".......duval_data_generator", "datasets", "duval_polygon_dataset.csv"), "FAULT"),
-        "rogers": (os.path.join(BASE_DIR, "rogers_data_generator", "datasets", "rogers_rule_dataset.csv"), "FAULT"),
-        "drm": (os.path.join(BASE_DIR, "drm_data_generator", "datasets", "drm_rule_dataset.csv"), "FAULT"),
+        "duval": (os.path.join(os.path.dirname(BASE_DIR), "duval_data_generator", "datasets", "duval_polygon_dataset.csv"), "FAULT"),
+        "rogers": (os.path.join(os.path.dirname(BASE_DIR), "rogers_data_generator", "datasets", "rogers_rule_dataset.csv"), "FAULT"),
+        "drm": (os.path.join(os.path.dirname(BASE_DIR), "drm_data_generator", "datasets", "drm_rule_dataset.csv"), "FAULT"),
         # fill other dataset paths if you use them
     }
 
@@ -89,6 +93,13 @@ if __name__ == "__main__":
         'clf__epochs': [25, 50],
         'clf__batch_size': [16, 32],
         'clf__optim': ['Adam']
+    }
+
+    # Random Forest parameter grid for comparison
+    rf_param_grid = {
+        'clf__n_estimators': [100],
+        'clf__max_depth': [None, 10],
+        'clf__random_state': [42]
     }
 
     for method_name, (file_path, label_col) in methods.items():
@@ -175,6 +186,46 @@ if __name__ == "__main__":
                 print(f"Saved loss curve at: {loss_path}")
             else:
                 print("Loss history not available.")
+                
+                
+            # --- Train Random Forest for comparison ---
+            try:
+                print('\n--- Training Random Forest for comparison ---')
+                rf_pipeline = ImbPipeline([
+                    ('smote', SMOTE(random_state=42, k_neighbors=5)),
+                    ('scaler', StandardScaler()),
+                    ('clf', RandomForestClassifier())
+                ])
+                rf_grid = GridSearchCV(rf_pipeline, rf_param_grid, cv=3, scoring='accuracy', verbose=1, n_jobs=1)
+                rf_grid.fit(X_train, y_train)
+                best_rf = rf_grid.best_estimator_
+                y_pred_rf = best_rf.predict(X_test)
+                acc_rf = accuracy_score(y_test, y_pred_rf)
+                print("RF Test Accuracy:", acc_rf)
+                print(classification_report(y_test, y_pred_rf, target_names=le.classes_, zero_division=0))
+
+                # save RF pipeline
+                rf_save_dir = os.path.join(RESULTS_DIR, f"{method_name}_rf")
+                os.makedirs(rf_save_dir, exist_ok=True)
+                rf_save_path = os.path.join(rf_save_dir, "pipeline.joblib")
+                joblib.dump(best_rf, rf_save_path)
+                print(f"Saved RF pipeline at: {rf_save_path}")
+
+                # plot RF confusion matrix
+                cm_rf = confusion_matrix(y_test, y_pred_rf)
+                plt.figure(figsize=(6,5))
+                sns.heatmap(cm_rf, annot=True, fmt='d', xticklabels=le.classes_, yticklabels=le.classes_, cmap='Greens')
+                plt.xlabel("Predicted")
+                plt.ylabel("True")
+                plt.title(f"{method_name} RF Confusion Matrix")
+                plot_path_rf = os.path.join(RESULTS_DIR, f"confusion_matrix_{method_name.lower()}_rf.png")
+                plt.tight_layout()
+                plt.savefig(plot_path_rf)
+                plt.close()
+                print(f"Saved RF confusion matrix at: {plot_path_rf}")
+            except Exception as e:
+                print("Error training RF:", e)
+                traceback.print_exc()
         except Exception as e:
             print(f"Error in {method_name} pipeline: {e}")
             traceback.print_exc()

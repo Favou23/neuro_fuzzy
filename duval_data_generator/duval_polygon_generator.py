@@ -4,7 +4,7 @@ import pandas as pd
 import random
 from matplotlib.path import Path
 import os
-from iec_rule_based import duval_polygons, percentages_to_xy  # note import
+from fuzzy_logic.iec_rule_based import duval_polygons, percentages_to_xy  # note import
 
 # convert triplets -> XY once
 duval_polygons_xy = {z: [percentages_to_xy(*t) for t in triplets]

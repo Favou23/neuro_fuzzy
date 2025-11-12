@@ -47,5 +47,7 @@ COPY . .
 # Expose the port that the application listens on.
 EXPOSE 8000
 
-# Run the application.
-CMD gunicorn 'venv.Lib.site-packages.werkzeug.wsgi' --bind=0.0.0.0:8000
+# Run default command: print brief help. The project currently doesn't expose a
+# web server by default; run training or prediction scripts from inside the
+# container if desired. This avoids an invalid gunicorn invocation.
+CMD ["/bin/sh", "-c", "echo 'This container contains the neuro_fuzzy codebase. Run training/prediction scripts manually.' && sleep 1d"]
