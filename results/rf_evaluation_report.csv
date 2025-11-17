@@ -1,0 +1,4 @@
+Method,Status,Model_Path
+duval,Trained,C:\Users\USER\my_desktop\neuro_fuzzy\fuzzy_logic\results\duval_randomforest
+rogers,Trained,C:\Users\USER\my_desktop\neuro_fuzzy\fuzzy_logic\results\rogers_randomforest
+drm,Trained,C:\Users\USER\my_desktop\neuro_fuzzy\fuzzy_logic\results\drm_randomforest
