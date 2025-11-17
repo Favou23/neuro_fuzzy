@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import random
-from fuzzy_logic.iec_rule_based import rogers_classify_row  # <-- use the IEC rules
+from iec_rule_based import rogers_classify_row  # <-- use the IEC rules
 
 def gen_positive(mean, std):
     """Gaussian noise, positive only"""
