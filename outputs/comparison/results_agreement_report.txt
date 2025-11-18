@@ -1,0 +1,20 @@
+================================================================================
+ANFIS vs RANDOM FOREST - AGREEMENT ANALYSIS
+================================================================================
+
+Generated: 2025-11-18 02:18:38
+
+Agreement Rates by Method:
+
+DUVAL:
+  Agreements:     343/349
+  Agreement Rate: 98.28%
+
+ROGERS:
+  Agreements:     93/349
+  Agreement Rate: 26.65%
+
+DRM:
+  Agreements:     8/349
+  Agreement Rate: 2.29%
+

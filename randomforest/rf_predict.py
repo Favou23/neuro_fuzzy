@@ -99,20 +99,47 @@ def predict_single_rf(sample_dict, method, model, encoder, verbose=True):
     if verbose:
         print(f"[RF] Features: {X.values}")
     
-    # Get prediction
-    X_array = X.to_numpy(dtype=np.float32)
-    y_pred = model.predict(X_array)
-    pred_idx = int(y_pred[0])
-    
+    # Ensure we pass a DataFrame with the same columns the model was trained with.
+    # This avoids warnings like: "X does not have valid feature names, but StandardScaler was fitted with feature names"
+    feature_names = None
+    try:
+        # scikit-learn exposes feature names used during fit via feature_names_in_
+        feature_names = getattr(model, "feature_names_in_", None)
+    except Exception:
+        feature_names = None
+
+    X_for_pred = X
+    if feature_names is not None:
+        # Reindex/ensure column order matches training; fill missing columns with 0
+        missing = [c for c in feature_names if c not in X_for_pred.columns]
+        if missing:
+            # add missing columns with zeros to avoid errors
+            for c in missing:
+                X_for_pred[c] = 0.0
+        X_for_pred = X_for_pred.reindex(columns=feature_names)
+
+    # Get prediction - pass DataFrame instead of numpy array to preserve feature names
+    try:
+        y_pred = model.predict(X_for_pred)
+        pred_idx = int(np.array(y_pred).ravel()[0])
+    except Exception:
+        # fallback to numpy if model absolutely requires it
+        X_array = X_for_pred.to_numpy(dtype=np.float32)
+        y_pred = model.predict(X_array)
+        pred_idx = int(np.array(y_pred).ravel()[0])
+
     # Get probability/confidence
+    confidence = None
     if hasattr(model, 'predict_proba'):
         try:
-            proba = model.predict_proba(X_array)
+            proba = model.predict_proba(X_for_pred)
             confidence = float(np.max(proba))
-        except:
-            confidence = None
-    else:
-        confidence = None
+        except Exception:
+            try:
+                proba = model.predict_proba(X_array)
+                confidence = float(np.max(proba))
+            except Exception:
+                confidence = None
     
     # Decode label
     try:
